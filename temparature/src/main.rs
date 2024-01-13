@@ -48,6 +48,10 @@ fn c2f(input: u8) -> f32 {
     (9.0 / 5.0) * input as f32 + 32.0
 }
 
+fn f2c(input: u8) -> f32 {
+    (5.0 / 9.0) * (input as f32 - 32.0)
+}
+
 fn main() {
     let choice: u8 = read_user_choice();
     println!("You chose: {choice}");
@@ -55,9 +59,8 @@ fn main() {
     let input;
     match choice {
         1 => {
-            _ = get_input_temp();
-            println!("Not implemented yet!");
-            result = 0.0;
+            input = get_input_temp();
+            result = f2c(input);
         }
         2 => {
             input = get_input_temp();
@@ -65,5 +68,5 @@ fn main() {
         }
         _ => return,
     }
-    println!("Result: {}", result);
+    println!("Result: {}", result as i32);
 }
