@@ -2,13 +2,12 @@ use std::env;
 use dotenv::dotenv;
 use reqwest::Error;
 
-const BASE_URL: &str = "https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=";
 
-async fn get_request() -> Result<(), Error> {
+async fn get_result(prompt: &str) -> Result<(), Error> {
     let api_key = env::var("GEMINI_API_KEY").expect("$GEMINI_API_KEY is not set");
-    let url = format!("{BASE_URL}{api_key}");
-    let json_data = r#"{"contents":[{"parts":[{"text":"Write a story about a magic backpack"}]}]}"#;
-
+    let base_url = env::var("BASE_URL").expect("$BASE_URL is not set");
+    let url = format!("{base_url}?key={api_key}");
+    let json_data = format!(r#"{{"contents":[{{"parts":[{{"text":"{}"}}]}}]}}"#, prompt);
     let client = reqwest::Client::new();
 
     let response = client
@@ -29,6 +28,7 @@ async fn get_request() -> Result<(), Error> {
 #[tokio::main]
 async fn main() -> Result<(), Error> {
     dotenv().ok();
-    get_request().await?;
+    let prompt = "Tell me five countries in Europe";
+    get_result(prompt).await?;
     Ok(())
 }
