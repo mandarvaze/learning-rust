@@ -27,8 +27,8 @@ async fn get_result(prompt: &str) -> Result<(), Error> {
 
 #[tokio::main]
 async fn main() -> Result<(), Error> {
+    let prompt = std::env::args().nth(1).expect("no prompt given");
     dotenv().ok();
-    let prompt = "Tell me five countries in Europe";
-    get_result(prompt).await?;
+    get_result(&prompt).await?;
     Ok(())
 }
