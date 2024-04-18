@@ -1,7 +1,13 @@
 use std::env;
 use dotenv::dotenv;
 use reqwest::Error;
+use clap::Parser;
 
+#[derive(Parser)]
+struct Cli {
+    /// The prompt for Gemini
+    prompt: String,
+}
 
 async fn get_result(prompt: &str) -> Result<(), Error> {
     let api_key = env::var("GEMINI_API_KEY").expect("$GEMINI_API_KEY is not set");
@@ -27,8 +33,8 @@ async fn get_result(prompt: &str) -> Result<(), Error> {
 
 #[tokio::main]
 async fn main() -> Result<(), Error> {
-    let prompt = std::env::args().nth(1).expect("no prompt given");
+    let args = Cli::parse();
     dotenv().ok();
-    get_result(&prompt).await?;
+    get_result(&args.prompt).await?;
     Ok(())
 }
