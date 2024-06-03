@@ -2,11 +2,23 @@ use std::env;
 use dotenv::dotenv;
 use reqwest::Error;
 use clap::Parser;
+use serde_json::Value;
 
 #[derive(Parser)]
 struct Cli {
     /// The prompt for Gemini
     prompt: String,
+}
+
+fn extract_text_from_json(json_body: &str) -> Option<String> {
+    let v: Value = serde_json::from_str(json_body).unwrap();
+
+    if let Some(parts) = v["candidates"][0]["content"]["parts"].as_array() {
+        if let Some(text) = parts[0]["text"].as_str() {
+            return Some(text.to_string());
+        }
+    }
+    None
 }
 
 async fn get_result(prompt: &str) -> Result<(), Error> {
@@ -23,10 +35,12 @@ async fn get_result(prompt: &str) -> Result<(), Error> {
         .send()
         .await?;
 
+    #[cfg(debug_assertions)] 
     println!("Status: {}", response.status());
 
     let body = response.text().await?;
-    println!("Body:\n{}", body);
+    let answer: String = extract_text_from_json(&body).unwrap();
+    println!("Answer:\n{}", answer);
 
     Ok(())
 }
