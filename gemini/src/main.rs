@@ -21,34 +21,42 @@ fn extract_text_from_json(json_body: &str) -> Option<String> {
     None
 }
 
-async fn get_result(prompt: &str) -> Result<(), Error> {
+async fn perform_request(client: &reqwest::Client, url: &str, json_data: &str) -> Result<reqwest::Response, reqwest::Error> {
+    client
+        .post(url)
+        .header("Content-Type", "application/json")
+        .body(json_data.to_owned())
+        .send()
+        .await
+}
+
+async fn get_response_body(response: reqwest::Response) -> Result<String, reqwest::Error> {
+    response.text().await
+}
+
+async fn get_result(prompt: &str) -> Result<String, Error> {
     let api_key = env::var("GEMINI_API_KEY").expect("$GEMINI_API_KEY is not set");
     let base_url = env::var("BASE_URL").expect("$BASE_URL is not set");
     let url = format!("{base_url}?key={api_key}");
     let json_data = format!(r#"{{"contents":[{{"parts":[{{"text":"{}"}}]}}]}}"#, prompt);
     let client = reqwest::Client::new();
 
-    let response = client
-        .post(url)
-        .header("Content-Type", "application/json")
-        .body(json_data.to_owned())
-        .send()
-        .await?;
+    let response = perform_request(&client, &url, &json_data).await?;
 
     #[cfg(debug_assertions)] 
     println!("Status: {}", response.status());
 
-    let body = response.text().await?;
-    let answer: String = extract_text_from_json(&body).unwrap();
-    println!("Answer:\n{}", answer);
+    let body = get_response_body(response).await?;
+    let answer: String = extract_text_from_json(&body).unwrap();   
 
-    Ok(())
+    Ok(answer)
 }
 
 #[tokio::main]
 async fn main() -> Result<(), Error> {
     let args = Cli::parse();
     dotenv().ok();
-    get_result(&args.prompt).await?;
+    let answer = get_result(&args.prompt).await?;
+    println!("Answer:\n{}", answer);
     Ok(())
 }
